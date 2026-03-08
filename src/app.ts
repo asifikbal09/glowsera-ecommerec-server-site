@@ -1,19 +1,29 @@
-import express from "express";
-import { prisma } from "./lib/prisma";
+import express, { Application, NextFunction, Request, Response } from 'express';
+import cors from 'cors';
+import config from './config';
+import globalErrorHandler from './app/middlewares/globalErrorHandler';
+import notFound from './app/middlewares/notFound';
 
-const app = express();
+const app: Application = express();
+app.use(cors());
 
-app.get("/", (req, res) => {
-    prisma.$connect().then(() => {
-        console.log("Connected to the database successfully!");
-    }).catch((error) => {
-        console.error("Error connecting to the database:", error);
-    });
-  res.send("Hello, World!");
+//parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+
+app.get('/', (req: Request, res: Response) => {
+    res.send({
+        message: "Server is running..",
+        environment: config.node_env,
+        uptime: process.uptime().toFixed(2) + " sec",
+        timeStamp: new Date().toISOString()
+    })
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-}); 
+
+app.use(globalErrorHandler);
+
+app.use(notFound);
+
+export default app;
